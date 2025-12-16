@@ -17,14 +17,25 @@ export const checkConnection = async (host: string): Promise<boolean> => {
   // Basic validation to prevent fetching invalid defaults
   if (cleanHost === 'http://' || cleanHost === 'https://') return false;
 
-  // We let the fetch error bubble up so the UI can handle "Failed to fetch" (CORS/Network)
-  // vs "404" (Wrong path)
-  const response = await fetch(`${cleanHost}`, { 
-    method: 'GET',
-    mode: 'cors',
-    credentials: 'omit'
-  });
-  return response.ok;
+  // Setup timeout to avoid hanging UI on unreachable hosts
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+  try {
+    // We let the fetch error bubble up so the UI can handle "Failed to fetch" (CORS/Network)
+    // vs "404" (Wrong path)
+    const response = await fetch(`${cleanHost}`, { 
+      method: 'GET',
+      mode: 'cors',
+      credentials: 'omit',
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    return response.ok;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
+  }
 };
 
 export const fetchModels = async (host: string): Promise<string[]> => {

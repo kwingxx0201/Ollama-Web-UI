@@ -49,9 +49,8 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({
               setLocalSettings(prev => ({ ...prev, selectedModel: fetchedModels[0] }));
             }
           } catch (e) {
-             console.warn("Models fetch error", e);
              // Connection ok, but models failed?
-             // This might happen if / is OK but /api/tags fails, though unlikely.
+             // Silently fail model fetch if main connection was OK, just don't update list
           }
         }
       } else {
@@ -61,11 +60,19 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({
       }
     } catch (err: any) {
       setConnectionStatus('error');
-      // Downgrade to warn to avoid noise in console for expected connectivity checks (e.g. invalid host or offline)
-      console.warn("Connection Check Detail:", err);
       
-      if (err.message && (err.message.includes('Failed to fetch') || err.message.includes('NetworkError'))) {
-        setErrorMsg('Network Error: Could not reach Ollama.');
+      // Determine precise error for UI
+      const isMixedContent = window.location.protocol === 'https:' && host.includes('http:');
+      const isFetchError = err.message && (err.message.includes('Failed to fetch') || err.message.includes('NetworkError') || err.name === 'AbortError');
+
+      if (isMixedContent) {
+        setErrorMsg('Mixed Content Error: Cannot connect to HTTP (localhost) from an HTTPS site. Please use a tunneling service (like ngrok) or run this app locally on HTTP.');
+      } else if (isFetchError) {
+        if (err.name === 'AbortError') {
+           setErrorMsg('Connection Timed Out. Is Ollama running?');
+        } else {
+           setErrorMsg('Network Error: Could not reach Ollama. Check CORS/OLLAMA_ORIGINS.');
+        }
       } else {
         setErrorMsg(err.message || 'Failed to connect.');
       }
@@ -115,7 +122,7 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({
                 value={localSettings.host}
                 onChange={(e) => handleChange('host', e.target.value)}
                 className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                placeholder="http://localhost:11434"
+                placeholder="http://127.0.0.1:11434"
               />
               <button
                 onClick={() => handleCheckConnection(localSettings.host)}

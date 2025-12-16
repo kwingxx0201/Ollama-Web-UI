@@ -7,7 +7,7 @@ import InputArea from './components/InputArea';
 import { Settings, MessageSquarePlus, Trash2, Bot } from 'lucide-react';
 
 const DEFAULT_SETTINGS: AppSettings = {
-  host: 'http://localhost:11434',
+  host: 'http://127.0.0.1:11434',
   selectedModel: '',
   systemPrompt: 'You are a helpful AI assistant.',
 };
