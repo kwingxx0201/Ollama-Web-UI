@@ -7,8 +7,8 @@ const normalizeHost = (host: string): string => {
   if (!normalized.match(/^https?:\/\//)) {
     normalized = `http://${normalized}`;
   }
-  // Remove trailing slash
-  return normalized.replace(/\/$/, '');
+  // Remove trailing slashes
+  return normalized.replace(/\/+$/, '');
 };
 
 export const checkConnection = async (host: string): Promise<boolean> => {

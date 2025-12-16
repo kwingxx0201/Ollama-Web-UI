@@ -115,7 +115,7 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({
         <div className="p-6 space-y-6 overflow-y-auto">
           {/* Host Configuration */}
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-slate-700">Ollama Host URL</label>
+            <label className="block text-sm font-medium text-slate-700">Ollama Server URL</label>
             <div className="flex gap-2">
               <input
                 type="text"
@@ -186,7 +186,7 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({
             </select>
             {models.length === 0 && connectionStatus !== 'error' && (
               <div className="text-xs text-slate-500 flex items-center gap-1">
-                <Globe className="w-3 h-3" /> Connect to host to load models.
+                <Globe className="w-3 h-3" /> Connect to server to load models.
               </div>
             )}
           </div>
