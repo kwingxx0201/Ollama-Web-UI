@@ -1,0 +1,5 @@
+{
+  "name": "Ollama Web UI",
+  "description": "A modern, minimalist web interface for interacting with local Ollama models. Supports text and image inputs (multimodal), streaming responses, and connection configuration.",
+  "requestFramePermissions": []
+}
