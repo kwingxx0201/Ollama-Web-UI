@@ -1,24 +1,45 @@
 import { AppSettings, OllamaListResponse } from '../types';
 
-export const checkConnection = async (host: string): Promise<boolean> => {
-  try {
-    // Usually a simple GET to root returns 'Ollama is running'
-    const response = await fetch(`${host}`, { method: 'GET' });
-    return response.ok;
-  } catch (error) {
-    console.error("Connection check failed:", error);
-    return false;
+// Helper to normalize host URL
+const normalizeHost = (host: string): string => {
+  let normalized = host.trim();
+  // If it doesn't start with http:// or https://, assume http://
+  if (!normalized.match(/^https?:\/\//)) {
+    normalized = `http://${normalized}`;
   }
+  // Remove trailing slash
+  return normalized.replace(/\/$/, '');
+};
+
+export const checkConnection = async (host: string): Promise<boolean> => {
+  const cleanHost = normalizeHost(host);
+  
+  // Basic validation to prevent fetching invalid defaults
+  if (cleanHost === 'http://' || cleanHost === 'https://') return false;
+
+  // We let the fetch error bubble up so the UI can handle "Failed to fetch" (CORS/Network)
+  // vs "404" (Wrong path)
+  const response = await fetch(`${cleanHost}`, { 
+    method: 'GET',
+    mode: 'cors',
+    credentials: 'omit'
+  });
+  return response.ok;
 };
 
 export const fetchModels = async (host: string): Promise<string[]> => {
   try {
-    const response = await fetch(`${host}/api/tags`);
+    const cleanHost = normalizeHost(host);
+    const response = await fetch(`${cleanHost}/api/tags`, {
+      method: 'GET',
+      mode: 'cors',
+      credentials: 'omit'
+    });
     if (!response.ok) throw new Error('Failed to fetch models');
     const data: OllamaListResponse = await response.json();
     return data.models.map((m) => m.name);
   } catch (error) {
-    console.error("Fetch models failed:", error);
+    // Re-throw so UI can handle it
     throw error;
   }
 };
@@ -31,7 +52,8 @@ export const streamChat = async (
   onError: (err: any) => void
 ) => {
   try {
-    const response = await fetch(`${settings.host}/api/chat`, {
+    const cleanHost = normalizeHost(settings.host);
+    const response = await fetch(`${cleanHost}/api/chat`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

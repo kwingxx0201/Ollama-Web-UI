@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, X, RefreshCw, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Settings, X, RefreshCw, AlertCircle, CheckCircle2, Globe } from 'lucide-react';
 import { AppSettings } from '../types';
 import { fetchModels, checkConnection } from '../services/ollamaService';
 
@@ -37,23 +37,38 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({
     
     try {
       const isConnected = await checkConnection(host);
+      
       if (isConnected) {
         setConnectionStatus('success');
         if (fetchList) {
-          const fetchedModels = await fetchModels(host);
-          setModels(fetchedModels);
-          // Auto-select first model if none selected or current invalid
-          if (!fetchedModels.includes(localSettings.selectedModel) && fetchedModels.length > 0) {
-            setLocalSettings(prev => ({ ...prev, selectedModel: fetchedModels[0] }));
+          try {
+            const fetchedModels = await fetchModels(host);
+            setModels(fetchedModels);
+            // Auto-select first model if none selected or current invalid
+            if (!fetchedModels.includes(localSettings.selectedModel) && fetchedModels.length > 0) {
+              setLocalSettings(prev => ({ ...prev, selectedModel: fetchedModels[0] }));
+            }
+          } catch (e) {
+             console.warn("Models fetch error", e);
+             // Connection ok, but models failed?
+             // This might happen if / is OK but /api/tags fails, though unlikely.
           }
         }
       } else {
+        // response.ok was false
         setConnectionStatus('error');
-        setErrorMsg('Could not connect. Ensure Ollama is running.');
+        setErrorMsg('Connected to server, but it returned an error.');
       }
-    } catch (err) {
+    } catch (err: any) {
       setConnectionStatus('error');
-      setErrorMsg('Failed to connect. Check CORS settings or URL.');
+      // Downgrade to warn to avoid noise in console for expected connectivity checks (e.g. invalid host or offline)
+      console.warn("Connection Check Detail:", err);
+      
+      if (err.message && (err.message.includes('Failed to fetch') || err.message.includes('NetworkError'))) {
+        setErrorMsg('Network Error: Could not reach Ollama.');
+      } else {
+        setErrorMsg(err.message || 'Failed to connect.');
+      }
     } finally {
       setIsLoadingModels(false);
     }
@@ -64,7 +79,14 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({
   };
 
   const handleSave = () => {
-    onSave(localSettings);
+    // Basic cleanup before saving
+    let cleanHost = localSettings.host.trim();
+    if (!cleanHost.match(/^https?:\/\//)) {
+        cleanHost = `http://${cleanHost}`;
+    }
+    cleanHost = cleanHost.replace(/\/$/, '');
+    
+    onSave({ ...localSettings, host: cleanHost });
     onClose();
   };
 
@@ -112,10 +134,31 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({
               </p>
             )}
             {connectionStatus === 'error' && (
-              <div className="text-xs text-red-500 bg-red-50 p-2 rounded border border-red-100">
-                <p className="flex items-center gap-1 font-medium"><AlertCircle className="w-3 h-3" /> Connection Failed</p>
-                <p className="mt-1 opacity-90">{errorMsg}</p>
-                <p className="mt-1 opacity-75">Tip: Run Ollama with `OLLAMA_ORIGINS="*"` environment variable.</p>
+              <div className="text-xs text-red-600 bg-red-50 p-3 rounded-lg border border-red-100 space-y-2">
+                <p className="flex items-center gap-1 font-bold">
+                  <AlertCircle className="w-3 h-3" /> Connection Failed
+                </p>
+                <p>{errorMsg}</p>
+                
+                <div className="pt-2 border-t border-red-100">
+                  <p className="font-semibold mb-1">Troubleshooting:</p>
+                  <ul className="list-disc list-inside space-y-1 opacity-90">
+                    <li>Is Ollama running?</li>
+                    <li>
+                      <strong>CORS:</strong> Did you set <code>OLLAMA_ORIGINS="*"</code>?
+                    </li>
+                    <li>
+                      <strong>Mixed Content:</strong> Are you using HTTPS? You cannot connect to HTTP localhost from HTTPS.
+                    </li>
+                  </ul>
+                  
+                  <div className="mt-2">
+                    <p className="opacity-75 mb-1">Mac/Linux command:</p>
+                    <code className="block bg-black/10 p-2 rounded text-[10px] font-mono whitespace-pre-wrap">
+                      OLLAMA_ORIGINS="*" ollama serve
+                    </code>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -135,7 +178,9 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({
               ))}
             </select>
             {models.length === 0 && connectionStatus !== 'error' && (
-              <p className="text-xs text-slate-500">Connect to host to load models.</p>
+              <div className="text-xs text-slate-500 flex items-center gap-1">
+                <Globe className="w-3 h-3" /> Connect to host to load models.
+              </div>
             )}
           </div>
 
