@@ -27,7 +27,7 @@ const InputArea: React.FC<InputAreaProps> = ({ onSend, isLoading, disabled }) =>
     if (e.target.files && e.target.files.length > 0) {
       const files = Array.from(e.target.files);
       const newImages = await Promise.all(
-        files.map(async (file) => {
+        files.map(async (file: File) => {
           const base64 = await fileToBase64(file);
           return {
             file,
@@ -66,7 +66,7 @@ const InputArea: React.FC<InputAreaProps> = ({ onSend, isLoading, disabled }) =>
   };
 
   return (
-    <div className="border-t border-slate-200 bg-white p-4 pb-6 md:pb-4 sticky bottom-0 z-10 w-full max-w-4xl mx-auto rounded-t-xl md:rounded-xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+    <div className="border-t border-slate-200 bg-white p-4 pb-6 md:pb-4 w-full max-w-4xl mx-auto rounded-t-xl md:rounded-xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
       {/* Image Preview Area */}
       {selectedImages.length > 0 && (
         <div className="flex gap-3 mb-3 overflow-x-auto py-2">

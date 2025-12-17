@@ -33,7 +33,12 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ message }) => {
     // 2. Parse Markdown
     // We treat empty content as just empty string
     const rawHtml = mainContent ? marked.parse(mainContent) : '';
-    const cleanDisplayHtml = DOMPurify.sanitize(rawHtml as string);
+    
+    // Configure DOMPurify to allow images
+    const cleanDisplayHtml = DOMPurify.sanitize(rawHtml as string, {
+      ADD_TAGS: ['img'],
+      ADD_ATTR: ['src', 'alt', 'title', 'width', 'height'],
+    });
 
     // 3. Parse Think block markdown if exists
     const rawThinkHtml = thinkContent ? marked.parse(thinkContent) : '';

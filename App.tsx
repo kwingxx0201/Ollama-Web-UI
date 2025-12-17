@@ -124,7 +124,7 @@ export default function App() {
     <div className="flex flex-col h-screen bg-white md:bg-slate-50">
       
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-20 px-4 py-3 flex items-center justify-between shadow-sm">
+      <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-20 px-4 py-3 flex items-center justify-between shadow-sm flex-none">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-gradient-to-tr from-primary to-indigo-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-primary/30">
             <Bot className="w-5 h-5" />
@@ -163,10 +163,10 @@ export default function App() {
       </header>
 
       {/* Main Chat Area */}
-      <main className="flex-1 overflow-y-auto px-4 md:px-0">
-        <div className="max-w-4xl mx-auto h-full flex flex-col">
+      <main className="flex-1 overflow-y-auto px-4 md:px-0 scroll-smooth">
+        <div className="max-w-4xl mx-auto min-h-full flex flex-col justify-end">
           {messages.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-center p-8 opacity-0 animate-[fadeIn_0.5s_ease-out_forwards]">
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-8 opacity-0 animate-[fadeIn_0.5s_ease-out_forwards] my-auto">
               <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-6 text-slate-400">
                 <MessageSquarePlus className="w-10 h-10" />
               </div>
@@ -184,9 +184,7 @@ export default function App() {
               )}
             </div>
           ) : (
-            <div className="flex-1 py-6 flex flex-col justify-end min-h-0">
-               {/* Spacer to push content down if few messages */}
-               <div className="flex-1"></div>
+            <div className="flex flex-col py-6">
                {messages.map((msg) => (
                  <ChatBubble key={msg.id} message={msg} />
                ))}
@@ -199,14 +197,14 @@ export default function App() {
                     </div>
                   </div>
                )}
-               <div ref={messagesEndRef} />
+               <div ref={messagesEndRef} className="h-4" />
             </div>
           )}
         </div>
       </main>
 
       {/* Input Area */}
-      <div className="bg-white md:bg-slate-50">
+      <div className="bg-white md:bg-slate-50 flex-none">
         <InputArea 
           onSend={handleSendMessage} 
           isLoading={isLoading} 
